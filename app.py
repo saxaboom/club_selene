@@ -54,43 +54,51 @@ for i, msg in enumerate(messages):
         human_time = dt.strftime('%A, %B %d, %Y at %I:%M %p')
     except:
         human_time = msg['timestamp']
-    # Display message details
+    # Show message with no 'who' line, just message content
     st.write(f"**{msg['name']}**")
     st.write(f"{msg['message']}")
     st.write(f"{human_time}")
-    # Small delete button
-    delete_button = st.button(f"🗑️", key=f"delete_{i}")
-    # Show PIN input only after pressing delete
-    if delete_button:
-        st.session_state[f"pin_input_{i}"] = ''
-    pin_input = st.text_input(
-        f"Enter PIN to delete message {i}",
-        key=f"pin_input_{i}",
-        value=st.session_state.get(f"pin_input_{i}", ""),
-        label_visibility='hidden',
-        placeholder="PIN",
-        disabled=not st.session_state.get(f"delete_{i}", False)
-    )
-    # Confirm deletion
-    if st.button(f"Confirm Delete {i}", key=f"confirm_del_{i}"):
-        entered_pin = st.session_state.get(f"pin_input_{i}", "")
-        if entered_pin == pin_code:
-            try:
-                messages.pop(i)
-                save_data(messages, CHAT_FILE)
-                st.success("Message deleted.")
-            except IndexError:
-                st.error("Failed to delete message.")
-        else:
-            st.error("Incorrect PIN.")
 
-# --- Calendar View ---
+    # Initialize toggle state for delete section
+    toggle_key = f"delete_toggle_{i}"
+    if toggle_key not in st.session_state:
+        st.session_state[toggle_key] = False
+
+    # Small delete icon toggles hide/show
+    if st.button("🗑️", key=f"toggle_delete_{i}"):
+        st.session_state[toggle_key] = not st.session_state[toggle_key]
+
+    # Show PIN input and confirm only if toggle is True
+    if st.session_state[toggle_key]:
+        # Hidden PIN input: show as password field (masked)
+        pin_value = st.text_input(
+            f"Enter PIN to delete message {i}",
+            key=f"pin_input_{i}",
+            placeholder="PIN",
+            label_visibility='collapsed',
+            type='password'  # mask input
+        )
+        if st.button("Confirm Delete", key=f"confirm_del_{i}"):
+            entered_pin = st.session_state.get(f"pin_input_{i}", "")
+            if entered_pin == pin_code:
+                try:
+                    messages.pop(i)
+                    save_data(messages, CHAT_FILE)
+                    st.success("Message deleted.")
+                    # Reset toggle after delete
+                    st.session_state[toggle_key] = False
+                except:
+                    st.error("Failed to delete message.")
+            else:
+                st.error("Incorrect PIN.")
+
+# --- Schedule Play Dates ---
 st.header("Schedule Play Dates")
 today = datetime.today()
 selected_month = st.slider("Select Month", 1, 12, today.month)
 selected_year = st.slider("Select Year", today.year - 1, today.year + 1, today.year)
 
-# Generate calendar matrix
+# Generate calendar
 cal_matrix = calendar.monthcalendar(selected_year, selected_month)
 
 st.subheader(f"{calendar.month_name[selected_month]} {selected_year}")
@@ -102,13 +110,11 @@ for week in cal_matrix:
             cols[i].write(" ")
         else:
             date_str = f"{selected_year}-{selected_month:02d}-{day:02d}"
-            # Find bookings for the day
             day_bks = [b for b in bookings if b['date'] == date_str]
             with cols[i]:
                 if st.button(f"{day}", key=f"day_{date_str}"):
                     st.session_state['booking_date'] = date_str
                     st.session_state['show_booking_form'] = True
-                # Show existing bookings
                 if day_bks:
                     for b in day_bks:
                         st.write(f"- {b['child']} (Parent: {b['parent']}) at {b['time']}")
@@ -124,9 +130,7 @@ if st.session_state.get('show_booking_form'):
         parent_name = st.text_input("Parent's Name")
         child_name = st.text_input("Child's Name")
         time_slot = st.time_input("Preferred Time")
-        submit_bk = st.form_submit_button("Confirm Booking")
-        if submit_bk:
-            # Save booking
+        if st.form_submit_button("Confirm Booking"):
             bookings.append({
                 "parent": parent_name,
                 "child": child_name,
