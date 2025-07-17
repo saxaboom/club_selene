@@ -27,10 +27,11 @@ messages = load_data(CHAT_FILE)
 bookings = load_data(BOOKINGS_FILE)
 
 # --- App Title ---
-st.title("Club-Selene: Children's Play Date Organizer & Chat")
+st.title("Welcome to Club-Selene!")
+st.subheader("   ... a hub for messages and play-dates.  ; )")
 
 # --- Chat Section ---
-st.header("Public Chat")
+st.header("Leave a Message")
 with st.form("chat_form", clear_on_submit=True):
     user_name = st.text_input("Your Name")
     message = st.text_area("Message")
@@ -47,24 +48,41 @@ with st.form("chat_form", clear_on_submit=True):
 # Display chat messages
 st.subheader("Messages")
 for i, msg in enumerate(messages):
-    col1, col2, col3 = st.columns([4, 2, 2])
-    with col1:
-        st.write(f"**{msg['name']}** ({msg['timestamp']}): {msg['message']}")
-    with col2:
-        # Input for PIN to delete
-        pin_input = st.text_input(f"PIN to delete message {i}", key=f"pin_{i}")
-    with col3:
-        if st.button(f"Delete", key=f"del_{i}"):
-            entered_pin = st.session_state.get(f"pin_{i}")
-            if entered_pin == pin_code:
-                try:
-                    messages.pop(i)
-                    save_data(messages, CHAT_FILE)
-                    st.success("Message deleted.")
-                except IndexError:
-                    st.error("Failed to delete message.")
-            else:
-                st.error("Incorrect PIN.")
+    # Convert timestamp to human-readable
+    try:
+        dt = datetime.fromisoformat(msg['timestamp'])
+        human_time = dt.strftime('%A, %B %d, %Y at %I:%M %p')
+    except:
+        human_time = msg['timestamp']
+    # Display message details
+    st.write(f"**{msg['name']}**")
+    st.write(f"{msg['message']}")
+    st.write(f"{human_time}")
+    # Small delete button
+    delete_button = st.button(f"🗑️", key=f"delete_{i}")
+    # Show PIN input only after pressing delete
+    if delete_button:
+        st.session_state[f"pin_input_{i}"] = ''
+    pin_input = st.text_input(
+        f"Enter PIN to delete message {i}",
+        key=f"pin_input_{i}",
+        value=st.session_state.get(f"pin_input_{i}", ""),
+        label_visibility='hidden',
+        placeholder="PIN",
+        disabled=not st.session_state.get(f"delete_{i}", False)
+    )
+    # Confirm deletion
+    if st.button(f"Confirm Delete {i}", key=f"confirm_del_{i}"):
+        entered_pin = st.session_state.get(f"pin_input_{i}", "")
+        if entered_pin == pin_code:
+            try:
+                messages.pop(i)
+                save_data(messages, CHAT_FILE)
+                st.success("Message deleted.")
+            except IndexError:
+                st.error("Failed to delete message.")
+        else:
+            st.error("Incorrect PIN.")
 
 # --- Calendar View ---
 st.header("Schedule Play Dates")
@@ -118,3 +136,4 @@ if st.session_state.get('show_booking_form'):
             save_data(bookings, BOOKINGS_FILE)
             st.success("Play date booked!")
             st.session_state['show_booking_form'] = False
+
