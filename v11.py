@@ -4,14 +4,14 @@ from datetime import datetime
 import calendar
 import uuid
 
-# Load PIN from secrets
+# Load your secret PIN from secrets.toml (ensure you have this set)
 pin_code = st.secrets["pin_key"]
 
 # Data files
 CHAT_FILE = 'chat_messages.json'
 BOOKINGS_FILE = 'bookings.json'
 
-# Helper functions
+# Helper functions to load and save JSON data
 def load_data(file):
     try:
         with open(file, 'r') as f:
@@ -23,10 +23,11 @@ def save_data(data, file):
     with open(file, 'w') as f:
         json.dump(data, f)
 
-# Load data
+# Load existing data
 messages = load_data(CHAT_FILE)
 bookings = load_data(BOOKINGS_FILE)
 
+# Application Title
 st.title("Welcome to Club-Selene!")
 st.subheader("... a hub for messages and play-dates.  ; )")
 
@@ -60,21 +61,25 @@ for msg in messages:
     st.write(f"{msg['message']}")
     st.write(f"{human_time}")
 
+    # Toggle delete button
     toggle_key = f"delete_toggle_{msg['id']}"
     if toggle_key not in st.session_state:
         st.session_state[toggle_key] = False
     if st.button("🗑️", key=f"toggle_delete_{msg['id']}"):
         st.session_state[toggle_key] = not st.session_state[toggle_key]
     if st.session_state.get(toggle_key):
-        # Show PIN input widget once per message
+        # Show PIN input widget for delete
         pin_input_key = f"pin_input_{msg['id']}"
-        # Create the input widget without assigning its value to session_state
+        # Create PIN input only if not existing
+        if pin_input_key not in st.session_state:
+            st.session_state[pin_input_key] = ''
         entered_pin = st.text_input(
             "Enter PIN to delete message",
             key=pin_input_key,
             type='password',
             label_visibility='collapsed'
         )
+        # Confirm delete button
         if st.button("Confirm Delete", key=f"confirm_del_{msg['id']}"):
             if entered_pin == pin_code:
                 try:
@@ -82,8 +87,6 @@ for msg in messages:
                     save_data(messages, CHAT_FILE)
                     st.success("Message deleted.")
                     st.session_state[toggle_key] = False
-                    # Optionally clear the PIN input
-                    st.session_state.pop(pin_input_key, None)
                 except:
                     st.error("Failed to delete message.")
             else:
@@ -100,6 +103,7 @@ selected_year = st.slider("Select Year", today.year - 1, today.year + 1, today.y
 cal_matrix = calendar.monthcalendar(selected_year, selected_month)
 st.subheader(f"{calendar.month_name[selected_month]} {selected_year}")
 
+# Session states for selected date
 if 'selected_date' not in st.session_state:
     st.session_state['selected_date'] = None
 if 'view_bookings_for_date' not in st.session_state:
@@ -162,66 +166,75 @@ if st.session_state.get('view_bookings_for_date'):
                 color = 'green'
             st.markdown(
                 f"**Child:** {b['child']} | **Parent:** {b['parent']} | **Time:** {b['time']} | "
-                f"**Status:** <span style='color:{color};'>{status}</span>",
+                f"**Status:** <span style='color:{color}'>{status}</span>",
                 unsafe_allow_html=True
             )
 
-            # Buttons for Confirm / Deny with PIN input
+            # Buttons for confirm/deny with PIN prompts
             col1, col2 = st.columns(2)
 
-            # Confirm
-            if st.button(f"Confirm {b['child']}", key=f"conf_{b['id']}"):
-                st.session_state[f"pin_needed_confirm_{b['id']}"] = True
+            # Confirm booking
+            with col1:
+                if st.button(f"Confirm {b['child']}", key=f"conf_{b['id']}"):
+                    # Create a PIN input widget
+                    pin_input_key = f"pin_confirm_{b['id']}"
+                    # Initialize in session state if not exist
+                    if pin_input_key not in st.session_state:
+                        st.session_state[pin_input_key] = ''
+                    # Create PIN input widget
+                    st.session_state[pin_input_key] = st.text_input(
+                        "Enter PIN to confirm",
+                        key=pin_input_key,
+                        type='password',
+                        label_visibility='collapsed'
+                    )
+                    # Submit button
+                    submit_conf_key = f"submit_conf_{b['id']}"
+                    if st.button("Submit Confirm", key=submit_conf_key):
+                        entered_pin = st.session_state.get(pin_input_key, "")
+                        if entered_pin == pin_code:
+                            # Update status
+                            for orig_b in bookings:
+                                if orig_b['id'] == b['id']:
+                                    orig_b['status'] = 'Confirmed'
+                                    break
+                            save_data(bookings, BOOKINGS_FILE)
+                            st.success("Booking confirmed.")
+                            # Clear PIN input
+                            st.session_state[pin_input_key] = ''
+                        else:
+                            st.error("Incorrect PIN.")
 
-            if st.session_state.get(f"pin_needed_confirm_{b['id']}"):
-                pin_key = f"pin_input_confirm_{b['id']}"
-                # Show PIN input once
-                entered_pin = st.text_input(
-                    "Enter PIN to confirm",
-                    key=pin_key,
-                    type='password'
-                )
-                if st.button(f"Submit Confirm {b['id']}"):
-                    if entered_pin == pin_code:
-                        # Update status
-                        for orig_b in bookings:
-                            if orig_b['id'] == b['id']:
-                                orig_b['status'] = 'Confirmed'
-                                break
-                        save_data(bookings, BOOKINGS_FILE)
-                        st.success("Booking confirmed.")
-                        # Reset flags
-                        st.session_state.pop(f"pin_needed_confirm_{b['id']}", None)
-                        st.session_state.pop(pin_key, None)
-                    else:
-                        st.error("Incorrect PIN")
-
-            # Deny
-            if st.button(f"Deny {b['child']}", key=f"deny_{b['id']}"):
-                st.session_state[f"pin_needed_deny_{b['id']}"] = True
-
-            if st.session_state.get(f"pin_needed_deny_{b['id']}"):
-                pin_key = f"pin_input_deny_{b['id']}"
-                # Show PIN input once
-                entered_pin = st.text_input(
-                    "Enter PIN to deny",
-                    key=pin_key,
-                    type='password'
-                )
-                if st.button(f"Submit Deny {b['id']}"):
-                    if entered_pin == pin_code:
-                        # Update status
-                        for orig_b in bookings:
-                            if orig_b['id'] == b['id']:
-                                orig_b['status'] = 'Blocked'
-                                break
-                        save_data(bookings, BOOKINGS_FILE)
-                        st.success("Booking denied.")
-                        # Reset flags
-                        st.session_state.pop(f"pin_needed_deny_{b['id']}", None)
-                        st.session_state.pop(pin_key, None)
-                    else:
-                        st.error("Incorrect PIN")
+            # Deny booking
+            with col2:
+                if st.button(f"Deny {b['child']}", key=f"deny_{b['id']}"):
+                    # Create PIN input widget
+                    pin_input_key = f"pin_deny_{b['id']}"
+                    if pin_input_key not in st.session_state:
+                        st.session_state[pin_input_key] = ''
+                    # Create PIN input widget
+                    st.session_state[pin_input_key] = st.text_input(
+                        "Enter PIN to deny",
+                        key=pin_input_key,
+                        type='password',
+                        label_visibility='collapsed'
+                    )
+                    # Submit button
+                    submit_deny_key = f"submit_deny_{b['id']}"
+                    if st.button("Submit Deny", key=submit_deny_key):
+                        entered_pin = st.session_state.get(pin_input_key, "")
+                        if entered_pin == pin_code:
+                            # Update status
+                            for orig_b in bookings:
+                                if orig_b['id'] == b['id']:
+                                    orig_b['status'] = 'Blocked'  # or 'Denied' if preferred
+                                    break
+                            save_data(bookings, BOOKINGS_FILE)
+                            st.success("Booking denied.")
+                            # Clear PIN input
+                            st.session_state[pin_input_key] = ''
+                        else:
+                            st.error("Incorrect PIN.")
     else:
         st.write("No bookings for this date.")
 
@@ -250,4 +263,5 @@ if st.session_state.get('selected_date'):
             # Reset selected date
             st.session_state['selected_date'] = None
             st.session_state['view_bookings_for_date'] = None
+
 

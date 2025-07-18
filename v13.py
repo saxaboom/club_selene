@@ -165,7 +165,9 @@ if st.session_state.get('view_bookings_for_date'):
                 f"**Status:** <span style='color:{color};'>{status}</span>",
                 unsafe_allow_html=True
             )
-
+#            st.write(f"**Child:** {b['child']} | **Parent:** {b['parent']} | **Time:** {b['time']}")
+#            st.markdown(f"**Status:** {status}", unsafe_allow_html=False)
+            
             # Buttons for Confirm / Deny with PIN input
             col1, col2 = st.columns(2)
 
