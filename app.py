@@ -122,11 +122,11 @@ for b in bookings:
 
 def get_date_icon(date_str):
     if date_str in blocked_dates:
-        return '🔴'
+        return 'RED' # '🔴'
     elif date_str in pending_dates:
-        return '🔵'
+        return 'BLUE' # '🔵'
     elif date_str in confirmed_dates:
-        return '🟢'
+        return 'GREEEN' #'🟢'
     else:
         return ''
 
@@ -155,20 +155,25 @@ if st.session_state.get('view_bookings_for_date'):
             status = b.get('status', 'Pending')
             color = "black"
             if status == 'Blocked':
-                color = '🔴'
+                color = 'red'
             elif status == 'Pending':
-                color = '🔵'
+                color = 'blue'
             elif status == 'Confirmed':
-                color = '🟢'
-            st.write(f"**Child:** {b['child']} | **Parent:** {b['parent']} | **Time:** {b['time']} | **Status:** {status} {color}")
-
+                color = 'green'
+            st.markdown(
+                f"**Child:** {b['child']} | **Parent:** {b['parent']} | **Time:** {b['time']} | "
+                f"**Status:** <span style='color:{color};'>{status}</span>",
+                unsafe_allow_html=True
+            )
+#            st.write(f"**Child:** {b['child']} | **Parent:** {b['parent']} | **Time:** {b['time']}")
+#            st.markdown(f"**Status:** {status}", unsafe_allow_html=False)
+            
             # Buttons for Confirm / Deny with PIN input
             col1, col2 = st.columns(2)
 
             # Confirm
-            with col1:
-                if st.button(f"Confirm {b['child']}", key=f"conf_{b['id']}"):
-                    st.session_state[f"pin_needed_confirm_{b['id']}"] = True
+            if st.button(f"Confirm {b['child']}", key=f"conf_{b['id']}"):
+                st.session_state[f"pin_needed_confirm_{b['id']}"] = True
 
             if st.session_state.get(f"pin_needed_confirm_{b['id']}"):
                 pin_key = f"pin_input_confirm_{b['id']}"
@@ -194,9 +199,8 @@ if st.session_state.get('view_bookings_for_date'):
                         st.error("Incorrect PIN")
 
             # Deny
-            with col2:
-                if st.button(f"Deny {b['child']}", key=f"deny_{b['id']}"):
-                    st.session_state[f"pin_needed_deny_{b['id']}"] = True
+            if st.button(f"Deny {b['child']}", key=f"deny_{b['id']}"):
+                st.session_state[f"pin_needed_deny_{b['id']}"] = True
 
             if st.session_state.get(f"pin_needed_deny_{b['id']}"):
                 pin_key = f"pin_input_deny_{b['id']}"
