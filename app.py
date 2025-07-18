@@ -160,13 +160,13 @@ if st.session_state.get('view_bookings_for_date'):
                 color = 'blue'
             elif status == 'Confirmed':
                 color = 'green'
-            st.markdown(
-                f"**Child:** {b['child']} | **Parent:** {b['parent']} | **Time:** {b['time']} | "
-                f"**Status:** <span style='color:{color};'>{status}</span>",
-                unsafe_allow_html=True
-            )
-#            st.write(f"**Child:** {b['child']} | **Parent:** {b['parent']} | **Time:** {b['time']}")
-#            st.markdown(f"**Status:** {status}", unsafe_allow_html=False)
+#            st.markdown(
+#                f"**Child:** {b['child']} | **Parent:** {b['parent']} | **Time:** {b['time']} | "
+#                f"**Status:** <span style='color:{color};'>{status}</span>",
+#                unsafe_allow_html=True
+#            )
+            st.write(f"**Child:** {b['child']} | **Parent:** {b['parent']} | **Time:** {b['time']}")
+            st.write(f"**Status:** {status} {color}")
             
             # Buttons for Confirm / Deny with PIN input
             col1, col2 = st.columns(2)
