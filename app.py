@@ -56,9 +56,9 @@ for msg in messages:
         human_time = dt.strftime('%A, %B %d, %Y at %I:%M %p')
     except:
         human_time = msg['timestamp']
-    st.write(f"**{msg['name']}**")
-    st.write(f"{msg['message']}")
-    st.write(f"{human_time}")
+    st.markdown(f"**{msg['name']}**, unsafe_allow_html=True")
+    st.markdown(f"{msg['message']}", unsafe_allow_html=True)
+    st.markdown(f"{human_time}", unsafe_allow_html=True)
 
     toggle_key = f"delete_toggle_{msg['id']}"
     if toggle_key not in st.session_state:
