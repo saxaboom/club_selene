@@ -122,11 +122,11 @@ for b in bookings:
 
 def get_date_icon(date_str):
     if date_str in blocked_dates:
-        return 'B'
+        return '🔴'
     elif date_str in pending_dates:
-        return 'P'
+        return '🔵'
     elif date_str in confirmed_dates:
-        return 'C'
+        return '🟢'
     else:
         return ''
 
@@ -155,13 +155,19 @@ if st.session_state.get('view_bookings_for_date'):
             status = b.get('status', 'Pending')
             color = "black"
             if status == 'Blocked':
-                color = 'BLOCKED'
+                color = 'red'
             elif status == 'Pending':
-                color = 'PENDING'
+                color = 'blue'
             elif status == 'Confirmed':
-                color = 'CONFIRMED'
-            st.write(f"**Child**: {b['child']} | **Parent**: {b['parent']} | **Time**: {b['time']} | **Status**: {status} {color}")
-
+                color = 'green'
+            st.markdown(
+                f"**Child:** {b['child']} | **Parent:** {b['parent']} | **Time:** {b['time']} | "
+                f"**Status:** <span style='color:{color};'>{status}</span>",
+                unsafe_allow_html=True
+            )
+#            st.write(f"**Child:** {b['child']} | **Parent:** {b['parent']} | **Time:** {b['time']}")
+#            st.markdown(f"**Status:** {status}", unsafe_allow_html=False)
+            
             # Buttons for Confirm / Deny with PIN input
             col1, col2 = st.columns(2)
 
@@ -233,7 +239,7 @@ if st.session_state.get('selected_date'):
         parent_name = st.text_input("Parent's Name")
         child_name = st.text_input("Child's Name")
         time_slot = st.time_input("Preferred Time")
-        if st.form_submit_button("Confirm Booking"):
+        if st.form_submit_button("Submit Booking"):
             new_booking = {
                 "id": str(uuid.uuid4()),
                 "parent": parent_name,
