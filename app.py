@@ -56,9 +56,9 @@ for msg in messages:
         human_time = dt.strftime('%A, %B %d, %Y at %I:%M %p')
     except:
         human_time = msg['timestamp']
-    st.markdown(f"**{msg['name']}**, unsafe_allow_html=True")
-    st.markdown(f"{msg['message']}", unsafe_allow_html=True)
-    st.markdown(f"{human_time}", unsafe_allow_html=True)
+    st.text(f"**{msg['name']}**")
+    st.text(f"{msg['message']}")
+    st.text(f"{human_time}")
 
     toggle_key = f"delete_toggle_{msg['id']}"
     if toggle_key not in st.session_state:
@@ -160,7 +160,7 @@ if st.session_state.get('view_bookings_for_date'):
                 color = '\U0001F535' # '🔵'
             elif status == 'Confirmed':
                 color = '\U0001F7E2' #  '🟢'
-            st.markdown(f"**Child:** {b['child']} | **Parent:** {b['parent']} | **Time:** {b['time']} | **Status:** {status} {color}", unsafe_allow_html=True)
+            st.text(f"**Child:** {b['child']} | **Parent:** {b['parent']} | **Time:** {b['time']} | **Status:** {status} {color}")
 
             # Buttons for Confirm / Deny with PIN input
             col1, col2 = st.columns(2)
