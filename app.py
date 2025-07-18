@@ -155,23 +155,25 @@ if st.session_state.get('view_bookings_for_date'):
             status = b.get('status', 'Pending')
             color = "black"
             if status == 'Blocked':
-                color = 'red'
+                color = '🔴'
             elif status == 'Pending':
-                color = 'blue'
+                color = '🔵'
             elif status == 'Confirmed':
-                color = 'green'
-            st.markdown(
-                f"**Child:** {b['child']} | **Parent:** {b['parent']} | **Time:** {b['time']} | "
-                f"**Status:** <span style='color:{color};'>{status}</span>",
-                unsafe_allow_html=True
-            )
+                color = '🟢'
+#            st.markdown(
+#                f"**Child:** {b['child']} | **Parent:** {b['parent']} | **Time:** {b['time']} | "
+#                f"**Status:** <span style='color:{color};'>{status}</span>",
+#                unsafe_allow_html=True
+#            )
+            st.write(f"**Child:** {b['child']} | **Parent:** {b['parent']} | **Time:** {b['time']} | **Status:** {status} {color}")
 
             # Buttons for Confirm / Deny with PIN input
             col1, col2 = st.columns(2)
 
             # Confirm
-            if st.button(f"Confirm {b['child']}", key=f"conf_{b['id']}"):
-                st.session_state[f"pin_needed_confirm_{b['id']}"] = True
+            with col1:
+                if st.button(f"Confirm {b['child']}", key=f"conf_{b['id']}"):
+                    st.session_state[f"pin_needed_confirm_{b['id']}"] = True
 
             if st.session_state.get(f"pin_needed_confirm_{b['id']}"):
                 pin_key = f"pin_input_confirm_{b['id']}"
@@ -197,8 +199,9 @@ if st.session_state.get('view_bookings_for_date'):
                         st.error("Incorrect PIN")
 
             # Deny
-            if st.button(f"Deny {b['child']}", key=f"deny_{b['id']}"):
-                st.session_state[f"pin_needed_deny_{b['id']}"] = True
+            with col2:
+                if st.button(f"Deny {b['child']}", key=f"deny_{b['id']}"):
+                    st.session_state[f"pin_needed_deny_{b['id']}"] = True
 
             if st.session_state.get(f"pin_needed_deny_{b['id']}"):
                 pin_key = f"pin_input_deny_{b['id']}"
