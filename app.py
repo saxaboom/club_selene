@@ -122,11 +122,11 @@ for b in bookings:
 
 def get_date_icon(date_str):
     if date_str in blocked_dates:
-        return '\U0001F534' # '🔴'
+        return 'B'
     elif date_str in pending_dates:
-        return '\U0001F535' # '🔵'
+        return 'P'
     elif date_str in confirmed_dates:
-        return '\U0001F7E2' # '🟢'
+        return 'C'
     else:
         return ''
 
@@ -155,12 +155,12 @@ if st.session_state.get('view_bookings_for_date'):
             status = b.get('status', 'Pending')
             color = "black"
             if status == 'Blocked':
-                color = '\U0001F534' # '🔴'
+                color = 'BLOCKED'
             elif status == 'Pending':
-                color = '\U0001F535' # '🔵'
+                color = 'PENDING'
             elif status == 'Confirmed':
-                color = '\U0001F7E2' #  '🟢'
-            st.text(f"Child: {b['child']} | Parent: {b['parent']} | Time: {b['time']} | Status: {status} {color}")
+                color = 'CONFIRMED'
+            st.write(f"**Child**: {b['child']} | **Parent**: {b['parent']} | **Time**: {b['time']} | **Status**: {status} {color}")
 
             # Buttons for Confirm / Deny with PIN input
             col1, col2 = st.columns(2)
